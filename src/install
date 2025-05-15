@@ -1,0 +1,12 @@
+npm i react-router-dom
+npm i react-helmet
+npm install @reduxjs/toolkit
+npm install react-redux
+
+npm i react-js-pagination
+npm i jspdf------->> for pdf download
+
+
+npm i react-datepicker
+
+npm i react-chartjs-2
