@@ -1,239 +1,229 @@
+import React, { useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 
-import React from 'react';
-import ChatBot from 'react-simple-chatbot';
-import { ThemeProvider } from 'styled-components';
+// Local FAQ answers as fallback
+const localFAQs = {
+  'are your prices fixed': 'Yes, all our prices are fixed and listed on the website.',
+  'can i pre order flowers': 'Yes, you can pre-order flowers up to 7 days in advance.',
+  'do you have a mobile application': 'Yes, we have a mobile app for both Android and iOS.',
+  'what if my plant is damaged': 'If your plant arrives damaged, please contact support with a photo for a replacement or refund.',
+  'what are your delivery hours': 'We deliver daily from 8:00 AM to 6:00 PM, including weekends and holidays.',
+  'do you deliver to colombo': 'Yes, we deliver to all areas in Colombo and major cities across Sri Lanka. Delivery fees vary by location.',
+  'what payment methods do you accept': 'We accept cash on delivery, credit/debit cards, and mobile payments (Genie, FriMi, and mCash).',
+  'can i cancel my order': 'You can cancel your order up to 2 hours before the scheduled delivery time for a full refund.',
+  'how do i care for my flowers': 'Place flowers in clean water, trim stems diagonally every 2 days, and keep them away from direct sunlight and heat sources.',
+  'do you have wedding packages': 'Yes, we offer special wedding flower packages starting from LKR 25,000. Please visit our Wedding section or contact our sales team for details.'
 
-
-const steps = [
-  {
-    id: '0',
-    message: 'Hello! How can I help you with our Sri Lankan native flowers today?',
-    trigger: '1',
-  },
-  {
-    id: '1',
-    options: [
-      { value: 'organic', label: 'Are your flowers organic?', trigger: 'organic' },
-      { value: 'giftWrap', label: 'Do you have gift wrapping options?', trigger: 'giftWrap' },
-      { value: 'sameDayDelivery', label: 'Do you offer same-day delivery?', trigger: 'sameDayDelivery' },
-      { value: 'scheduleDelivery', label: 'Can I schedule a delivery date?', trigger: 'scheduleDelivery' },
-      { value: 'fixedPrices', label: 'Are your prices fixed?', trigger: 'fixedPrices' },
-      { value: 'minOrder', label: 'Is there a minimum order amount?', trigger: 'minOrder' },
-      { value: 'preOrder', label: 'Can I pre-order flowers?', trigger: 'preOrder' },
-      { value: 'mobileApp', label: 'Do you have a mobile app?', trigger: 'mobileApp' },
-      { value: 'seedsPlants', label: 'Do you sell flower seeds or plants?', trigger: 'seedsPlants' },
-      { value: 'delayedOrder', label: 'My order is delayed. What now?', trigger: 'delayedOrder' },
-      { value: 'phoneOrder', label: 'Can I order via phone?', trigger: 'phoneOrder' },
-      { value: 'damagedPlant', label: 'I got a damaged plant. Can I get a replacement?', trigger: 'damagedPlant' },
-      { value: 'paymentMethods', label: 'What payment methods do you accept?', trigger: 'paymentMethods' },
-      { value: 'loyaltyProgram', label: 'Is there a loyalty program?', trigger: 'loyaltyProgram' },
-      { value: 'notHomeDelivery', label: 'What happens if I\'m not home during delivery?', trigger: 'notHomeDelivery' },
-      { value: 'promoCode', label: 'How do I apply a promo code?', trigger: 'promoCode' },
-      { value: 'changeAddress', label: 'How do I change my delivery address?', trigger: 'changeAddress' },
-      { value: 'forgotDiscount', label: 'I forgot to apply my discount. Can I still get it?', trigger: 'forgotDiscount' },
-      { value: 'returnProduct', label: 'I want to return a product. How?', trigger: 'returnProduct' },
-      { value: 'beginnerFlower', label: 'Which flower is best for beginners?', trigger: 'beginnerFlower' },
-      { value: 'identifyNative', label: 'How do I identify native flowers?', trigger: 'identifyNative' },
-      { value: 'wateringNative', label: 'How often should I water native plants?', trigger: 'wateringNative' },
-      { value: 'mixNativeExotic', label: 'Can I mix native flowers with exotic ones?', trigger: 'mixNativeExotic' },
-      { value: 'droughtResistant', label: 'Are native flowers drought-resistant?', trigger: 'droughtResistant' },
-      { value: 'biodiversitySupport', label: 'How do native flowers support biodiversity?', trigger: 'biodiversitySupport' },
-      { value: 'butterflyAttract', label: 'Which native flowers attract butterflies?', trigger: 'butterflyAttract' },
-      { value: 'petSafe', label: 'Are native flowers safe for pets?', trigger: 'petSafe' },
-      { value: 'growInPots', label: 'Can I grow native flowers in pots?', trigger: 'growInPots' },
-      { value: 'whatIsNative', label: 'What makes a flower native?', trigger: 'whatIsNative' },
-      { value: 'flowerTypes', label: 'What kind of flowers do you sell?', trigger: 'flowerTypes' },
-      { value: 'moreInfo', label: 'Tell me more about...', trigger: 'moreInfoOptions' },
-    ],
-  },
-  {
-    id: 'organic',
-    message: 'Yes! Our flowers are grown naturally without harmful chemicals.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'giftWrap',
-    message: 'Yes! Add gift wrapping at checkout for that special touch.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'sameDayDelivery',
-    message: 'We offer same-day delivery in selected areas - check your location at checkout.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'scheduleDelivery',
-    message: 'Absolutely! Just choose your preferred date during checkout.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'fixedPrices',
-    message: 'Yes, all prices are clearly listed - no surprises!',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'minOrder',
-    message: 'Nope! You can order as little or as much as you like.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'preOrder',
-    message: 'Yes, pre-ordering ensures your flowers are reserved just for you!',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'mobileApp',
-    message: 'Our mobile app is coming soon! Until then, you can shop easily on our website.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'seedsPlants',
-    message: 'We offer both seeds and young plants of native varieties.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'delayedOrder',
-    message: 'Sorry about that! Share your order ID and we\'ll update you right away.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'phoneOrder',
-    message: 'Sure! Call our hotline and our team will assist with your order.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'damagedPlant',
-    message: 'Oh no! Please send us a photo and we\'ll sort it out quickly.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'paymentMethods',
-    message: 'We accept cards, bank transfers, and mobile payments.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'loyaltyProgram',
-    message: 'Yes! You earn points with every purchase - use them for future discounts.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'notHomeDelivery',
-    message: 'Our courier will call you. You can reschedule or choose a drop-off point.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'promoCode',
-    message: 'At checkout, simply enter your promo code in the box provided.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'changeAddress',
-    message: 'Message us with your new address before the item ships.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'forgotDiscount',
-    message: 'Message us right away and we\'ll help if the order is fresh.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'returnProduct',
-    message: 'Just contact us within 3 days and we\'ll guide you through the process.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'beginnerFlower',
-    message: 'Araliya is a great starter - beautiful and easy to care for.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'identifyNative',
-    message: 'Look at leaf shape, color, and bloom pattern - or use our app!',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'wateringNative',
-    message: 'Usually 2-3 times a week, depending on the plant and weather.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'mixNativeExotic',
-    message: 'Yes, just be sure they share similar soil and sunlight needs.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'droughtResistant',
-    message: 'Most of them are! They\'re adapted to local climates.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'biodiversitySupport',
-    message: 'They provide food and habitat for local pollinators and insects.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'butterflyAttract',
-    message: 'Butterflies love flowers like Nil Manel, Erabadu, and Suriya.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'petSafe',
-    message: 'Most are, but always double-check - we label pet-safe plants clearly.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'growInPots',
-    message: 'Yes! Many do great in containers with proper soil and care.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'whatIsNative',
-    message: 'Native flowers naturally grow in Sri Lanka without human introduction.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'flowerTypes',
-    message: 'We specialize in Sri Lanka\'s beautiful native flowers, like Araliya and Nil Manel.',
-    trigger: 'askPlantingTips',
-  },
-  {
-    id: 'moreInfoOptions',
-    message: 'Which topic would you like more information on?',
-    trigger: '1', // Go back to the main options
-  },
-  {
-    id: 'askPlantingTips',
-    message: 'Let us know if you\'d like planting tips too!',
-    trigger: '1', // Go back to the main options
-  },
-];
-
-const theme = {
-  background: 'white',
-  headerBgColor: '#fa9c23',
-  headerFontSize: '20px',
-  botBubbleColor: '#fa9c23',
-  headerFontColor: 'white',
-  botFontColor: 'white',
-  userBubbleColor: '#FF5733',
-  userFontColor: 'white',
 };
 
-const config = {
-  botAvatar: "/images/chatbot.webp", 
-  floating: true,
-};
+function Chatbot() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
 
-function FlowerChatBot() {
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Check if question matches local FAQs
+  const checkLocalFAQs = (question) => {
+    const normalizedQuestion = question.toLowerCase().replace(/[^\w\s]/gi, '');
+    for (const [key, answer] of Object.entries(localFAQs)) {
+      if (normalizedQuestion.includes(key) || key.includes(normalizedQuestion)) {
+        return answer;
+      }
+    }
+    return null;
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+
+    const userMsg = { text: input, sender: 'user' };
+    setMessages(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      // First check local FAQs
+      const localAnswer = checkLocalFAQs(input);
+      if (localAnswer) {
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+        setMessages(prev => [...prev, { text: localAnswer, sender: 'bot' }]);
+        return;
+      }
+
+      // If no local match, call the API
+      const res = await axios.post('http://localhost:5000/ask', 
+        { question: input },
+        { timeout: 5000 }
+      );
+      setMessages(prev => [...prev, { text: res.data.answer, sender: 'bot' }]);
+    } catch (err) {
+      console.error('Error:', err);
+      
+      // Try local FAQs again if API fails
+      const localAnswer = checkLocalFAQs(input) || 
+        "I'm having trouble connecting. For immediate help, please call our support team at +94 789031697";
+      
+      setMessages(prev => [...prev, { text: localAnswer, sender: 'bot' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-      <ThemeProvider theme={theme}>
-        <ChatBot
-          headerTitle="Sri Lankan Flowers"
-          steps={steps}
-          {...config}
-        />
-      </ThemeProvider>
+    <>
+      {/* Floating chat icon */}
+      <div
+        onClick={() => setOpen(prev => !prev)}
+        style={{
+          position: 'fixed',
+          bottom: 20,
+          right: 20,
+          width: 60,
+          height: 60,
+          backgroundColor: '#4caf50',
+          borderRadius: '50%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: 'white',
+          cursor: 'pointer',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+          zIndex: 1000,
+          fontSize: 30,
+          userSelect: 'none',
+        }}
+        title={open ? 'Close Chat' : 'Open Chat'}
+      >
+        {open ? '×' : '💬'}
+      </div>
+
+      {/* Chat window */}
+      {open && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 90,
+            right: 20,
+            width: 320,
+            height: 400,
+            border: '1px solid #ccc',
+            borderRadius: 8,
+            backgroundColor: 'white',
+            padding: 10,
+            boxShadow: '0 4px 16px rgba(24, 23, 23, 0.9)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 1000,
+          }}
+        >
+          <h4 style={{ margin: '0 0 10px', color: '#4caf50' }}>Sri Lankan Flower Bot</h4>
+          <div
+            style={{
+              flexGrow: 1,
+              overflowY: 'auto',
+              paddingRight: 8,
+              marginBottom: 10,
+              border: '1px solid #eee',
+              borderRadius: 4,
+              padding: 8,
+            }}
+          >
+            {messages.length === 0 && (
+              <div style={{ color: '#888', fontStyle: 'italic' }}>
+                <p>Ask me about Sri Lankan flowers!</p>
+                <p>Common questions:</p>
+                <ul style={{ paddingLeft: 20, marginTop: 5 }}>
+                  {Object.keys(localFAQs).map((faq, i) => (
+                    <li key={i}>{faq.charAt(0).toUpperCase() + faq.slice(1)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                style={{
+                  textAlign: msg.sender === 'user' ? 'right' : 'left',
+                  marginBottom: 8,
+                }}
+              >
+                <div
+                  style={{
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    borderRadius: 12,
+                    backgroundColor: msg.sender === 'user' ? '#4caf50' : '#f1f1f1',
+                    color: msg.sender === 'user' ? 'white' : 'black',
+                    maxWidth: '80%',
+                    wordWrap: 'break-word',
+                  }}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ textAlign: 'left', marginBottom: 8 }}>
+                <div
+                  style={{
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    borderRadius: 12,
+                    backgroundColor: '#f1f1f1',
+                    color: 'black',
+                  }}
+                >
+                  Typing...
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <div style={{ display: 'flex' }}>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="Ask a question..."
+              style={{
+                flexGrow: 1,
+                padding: 8,
+                borderRadius: 20,
+                border: '1px solid #ccc',
+                outline: 'none',
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') sendMessage();
+              }}
+              disabled={loading}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={loading}
+              style={{
+                marginLeft: 8,
+                padding: '8px 16px',
+                borderRadius: 20,
+                border: 'none',
+                backgroundColor: '#4caf50',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                opacity: loading ? 0.7 : 1,
+              }}
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
-export default FlowerChatBot;
+export default Chatbot;

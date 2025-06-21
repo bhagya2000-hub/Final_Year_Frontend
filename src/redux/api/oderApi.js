@@ -5,7 +5,7 @@ export const orderApi = createApi({
   tagTypes:["Order","AdminOrders"],
   baseQuery: fetchBaseQuery({ 
   
-    baseUrl: "http://localhost:4000/api/v1",
+    baseUrl: "http://localhost:5000/api/v1",
     credentials: "include" 
   }),
   endpoints: (builder) => ({
